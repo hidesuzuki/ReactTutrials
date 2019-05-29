@@ -50,18 +50,21 @@ serviceWorker.unregister();
   }
   
   class Game extends React.Component {
-    constructor(props){
+    constructor(props) {
       super(props);
       this.state = {
-        history: [{
-          squares: Array(9).fill(null),
-        }],
-        xIsNext: true,
+        history: [
+          {
+            squares: Array(9).fill(null)
+          }
+        ],
+        stepNumber: 0,
+        xIsNext: true
       };
     }
 
     handleClick(i){
-      const history = this.state.history;
+      const history = this.state.history.slice(0, this.state.stepNumber + 1);
       const current = history[history.length - 1];
       const squares = current.squares.slice();
       if(calculateWinner(squares) || squares[i]){
@@ -69,20 +72,28 @@ serviceWorker.unregister();
       }
       squares[i] = this.state.xIsNext ? 'X' : 'O';
       this.setState({
-        history: history.concat(squares),
-        xIsNext: !this.state.xIsNext
+        history: history.concat({squares: squares}),
+        stepNumber:history.length,
+        xIsNext: !this.state.xIsNext,
+      });
+    }
+
+    jumpTo(step){
+      this.setState({
+        stepNumber: step,
+        xIsNext: (step%2) === 0,
       });
     }
 
     render() {
       const history = this.state.history;
-      const current = history[history.length - 1];
+      const current = history[this.state.stepNumber];
       const winner = calculateWinner(current.squares);
 
       const moves = history.map((step, move) => {
         const desc = move ? 'Go to move #' + move : 'Go to Game Start';
         return (
-          <li>
+          <li key={move}>
             <button onClick={() => this.jumpTo(move)}>{desc}</button>
           </li>
         );
@@ -109,6 +120,13 @@ serviceWorker.unregister();
     }
   }
   
+  // ========================================
+  
+  ReactDOM.render(
+    <Game />,
+    document.getElementById('root')
+  );
+  
   function calculateWinner(squares) {
     const lines = [
       [0, 1, 2],
@@ -118,7 +136,7 @@ serviceWorker.unregister();
       [1, 4, 7],
       [2, 5, 8],
       [0, 4, 8],
-      [2, 4, 6],
+      [2, 4, 6]
     ];
     for (let i = 0; i < lines.length; i++) {
       const [a, b, c] = lines[i];
@@ -128,11 +146,3 @@ serviceWorker.unregister();
     }
     return null;
   }
-
-  // ========================================
-  
-  ReactDOM.render(
-    <Game />,
-    document.getElementById('root')
-  );
-  
